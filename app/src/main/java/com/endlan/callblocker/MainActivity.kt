@@ -4,17 +4,19 @@ import android.Manifest
 import android.app.role.RoleManager
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.PorterDuff
 import android.os.Build
 import android.os.Bundle
 import android.widget.ArrayAdapter
+import android.widget.ImageView
+import android.widget.ListView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.switchmaterial.SwitchMaterial
-import android.widget.ListView
-import android.widget.TextView
 
 class MainActivity : AppCompatActivity() {
 
@@ -33,23 +35,34 @@ class MainActivity : AppCompatActivity() {
         ActivityResultContracts.RequestMultiplePermissions()
     ) { refreshStatus() }
 
-    private lateinit var statusText: TextView
+    private lateinit var iconScreening: ImageView
+    private lateinit var statusScreeningText: TextView
+    private lateinit var iconContacts: ImageView
+    private lateinit var statusContactsText: TextView
     private lateinit var switchEnabled: SwitchMaterial
     private lateinit var logList: ListView
+    private lateinit var emptyLogText: TextView
+
+    private val colorActive = android.graphics.Color.parseColor("#2E7D32")
+    private val colorInactive = android.graphics.Color.parseColor("#E57373")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        statusText = findViewById(R.id.statusText)
+        iconScreening = findViewById(R.id.iconScreening)
+        statusScreeningText = findViewById(R.id.statusScreeningText)
+        iconContacts = findViewById(R.id.iconContacts)
+        statusContactsText = findViewById(R.id.statusContactsText)
         switchEnabled = findViewById(R.id.switchEnabled)
         logList = findViewById(R.id.logList)
+        emptyLogText = findViewById(R.id.emptyLogText)
 
-        findViewById<android.widget.Button>(R.id.btnRequestRole).setOnClickListener {
+        findViewById<MaterialButton>(R.id.btnRequestRole).setOnClickListener {
             requestScreeningRole()
         }
 
-        findViewById<android.widget.Button>(R.id.btnRequestPermissions).setOnClickListener {
+        findViewById<MaterialButton>(R.id.btnRequestPermissions).setOnClickListener {
             requestPermissions()
         }
 
@@ -107,19 +120,27 @@ class MainActivity : AppCompatActivity() {
             isDefaultScreener = roleManager.isRoleHeld(RoleManager.ROLE_CALL_SCREENING)
         }
 
-        statusText.text = buildString {
-            append(if (isDefaultScreener) "✅ Default call screening: AKTIF\n" else "❌ Belum diset sebagai default call screening\n")
-            append(if (hasContacts) "✅ Izin akses kontak: OK" else "❌ Izin akses kontak belum diberikan")
-        }
+        iconScreening.setColorFilter(if (isDefaultScreener) colorActive else colorInactive, PorterDuff.Mode.SRC_IN)
+        statusScreeningText.text = if (isDefaultScreener) "Default call screening: aktif" else "Belum diset sebagai default call screening"
+
+        iconContacts.setColorFilter(if (hasContacts) colorActive else colorInactive, PorterDuff.Mode.SRC_IN)
+        statusContactsText.text = if (hasContacts) "Izin akses kontak: aktif" else "Izin akses kontak belum diberikan"
     }
 
     private fun loadLog() {
         val log = PrefsHelper.getBlockedLog(this)
-        val items = log.map { (number, timestamp) ->
-            val date = java.text.SimpleDateFormat("dd MMM yyyy, HH:mm", java.util.Locale("id", "ID"))
-                .format(java.util.Date(timestamp))
-            "$number  —  $date"
+        if (log.isEmpty()) {
+            emptyLogText.visibility = TextView.VISIBLE
+            logList.visibility = ListView.GONE
+        } else {
+            emptyLogText.visibility = TextView.GONE
+            logList.visibility = ListView.VISIBLE
+            val items = log.map { (number, timestamp) ->
+                val date = java.text.SimpleDateFormat("dd MMM yyyy, HH:mm", java.util.Locale("id", "ID"))
+                    .format(java.util.Date(timestamp))
+                "$number  —  $date"
+            }
+            logList.adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, items)
         }
-        logList.adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, items)
     }
 }
