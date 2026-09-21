@@ -171,15 +171,34 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Log section -->
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- Log section header with clear button -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Riwayat Panggilan Diblokir"
-            android:textStyle="bold"
-            android:textSize="15sp"
-            android:textColor="#1B1F1C"
-            android:layout_marginBottom="10dp" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="10dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Riwayat Panggilan Diblokir"
+                android:textStyle="bold"
+                android:textSize="15sp"
+                android:textColor="#1B1F1C" />
+
+            <TextView
+                android:id="@+id/btnClearLog"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hapus Semua"
+                android:textSize="13sp"
+                android:textColor="#E53935"
+                android:textStyle="bold"
+                android:padding="6dp"
+                android:background="?attr/selectableItemBackground" />
+        </LinearLayout>
 
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
