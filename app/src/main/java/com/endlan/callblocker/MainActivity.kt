@@ -1,6 +1,7 @@
 package com.endlan.callblocker
 
 import android.Manifest
+import android.app.AlertDialog
 import android.app.role.RoleManager
 import android.content.Context
 import android.content.pm.PackageManager
@@ -42,6 +43,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var switchEnabled: SwitchMaterial
     private lateinit var logList: ListView
     private lateinit var emptyLogText: TextView
+    private lateinit var btnClearLog: TextView
 
     private val colorActive = android.graphics.Color.parseColor("#2E7D32")
     private val colorInactive = android.graphics.Color.parseColor("#E57373")
@@ -57,6 +59,7 @@ class MainActivity : AppCompatActivity() {
         switchEnabled = findViewById(R.id.switchEnabled)
         logList = findViewById(R.id.logList)
         emptyLogText = findViewById(R.id.emptyLogText)
+        btnClearLog = findViewById(R.id.btnClearLog)
 
         findViewById<MaterialButton>(R.id.btnRequestRole).setOnClickListener {
             requestScreeningRole()
@@ -69,6 +72,15 @@ class MainActivity : AppCompatActivity() {
         switchEnabled.isChecked = PrefsHelper.isBlockingEnabled(this)
         switchEnabled.setOnCheckedChangeListener { _, isChecked ->
             PrefsHelper.setBlockingEnabled(this, isChecked)
+        }
+
+        btnClearLog.setOnClickListener {
+            confirmClearLog()
+        }
+
+        logList.setOnItemLongClickListener { _, _, position, _ ->
+            confirmRemoveEntry(position)
+            true
         }
 
         refreshStatus()
@@ -132,9 +144,11 @@ class MainActivity : AppCompatActivity() {
         if (log.isEmpty()) {
             emptyLogText.visibility = TextView.VISIBLE
             logList.visibility = ListView.GONE
+            btnClearLog.visibility = TextView.GONE
         } else {
             emptyLogText.visibility = TextView.GONE
             logList.visibility = ListView.VISIBLE
+            btnClearLog.visibility = TextView.VISIBLE
             val items = log.map { (number, timestamp) ->
                 val date = java.text.SimpleDateFormat("dd MMM yyyy, HH:mm", java.util.Locale("id", "ID"))
                     .format(java.util.Date(timestamp))
@@ -142,5 +156,29 @@ class MainActivity : AppCompatActivity() {
             }
             logList.adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, items)
         }
+    }
+
+    private fun confirmClearLog() {
+        AlertDialog.Builder(this)
+            .setTitle("Hapus semua riwayat?")
+            .setMessage("Seluruh riwayat panggilan yang diblokir akan dihapus permanen.")
+            .setPositiveButton("Hapus") { _, _ ->
+                PrefsHelper.clearBlockedLog(this)
+                loadLog()
+                Toast.makeText(this, "Riwayat berhasil dihapus", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("Batal", null)
+            .show()
+    }
+
+    private fun confirmRemoveEntry(position: Int) {
+        AlertDialog.Builder(this)
+            .setTitle("Hapus entri ini?")
+            .setPositiveButton("Hapus") { _, _ ->
+                PrefsHelper.removeLogEntry(this, position)
+                loadLog()
+            }
+            .setNegativeButton("Batal", null)
+            .show()
     }
 }

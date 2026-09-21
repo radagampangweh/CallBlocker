@@ -12,7 +12,7 @@ object PrefsHelper {
 
     fun isBlockingEnabled(context: Context): Boolean {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        return prefs.getBoolean(KEY_ENABLED, true) // default: aktif
+        return prefs.getBoolean(KEY_ENABLED, true)
     }
 
     fun setBlockingEnabled(context: Context, enabled: Boolean) {
@@ -64,7 +64,6 @@ object PrefsHelper {
 
         val newArr = JSONArray()
         newArr.put(entry)
-        // simpan entri terbaru di depan, batasi jumlah maksimum
         for (i in 0 until minOf(arr.length(), MAX_LOG_ENTRIES - 1)) {
             newArr.put(arr.get(i))
         }
@@ -80,6 +79,30 @@ object PrefsHelper {
             val obj = arr.getJSONObject(it)
             obj.getString("number") to obj.getLong("timestamp")
         }
+    }
+
+    /**
+     * Menghapus seluruh riwayat panggilan yang diblokir.
+     */
+    fun clearBlockedLog(context: Context) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putString(KEY_LOG, "[]").apply()
+    }
+
+    /**
+     * Menghapus satu entri riwayat berdasarkan posisinya di list (index 0 = paling baru).
+     */
+    fun removeLogEntry(context: Context, index: Int) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val raw = prefs.getString(KEY_LOG, "[]") ?: "[]"
+        val arr = JSONArray(raw)
+        if (index < 0 || index >= arr.length()) return
+
+        val newArr = JSONArray()
+        for (i in 0 until arr.length()) {
+            if (i != index) newArr.put(arr.get(i))
+        }
+        prefs.edit().putString(KEY_LOG, newArr.toString()).apply()
     }
 
     private fun normalize(number: String): String {
